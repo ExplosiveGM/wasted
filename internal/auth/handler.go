@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,90 +14,91 @@ func NewAuthHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// RequestCode godoc
+//
+//	@Description	Send code to user email or phone
+//	@Tags			auth
+//	@Param			input	body	RequestCodeInput	true	"Login info"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	CodeSentResponse
+//	@Summary		Sent code user
+//	@Router			/api/v1/auth/request-code [post]
 func (h *Handler) RequestCode(c *gin.Context) {
-	var jsonSchema struct {
-		Login string `json:"login" binding:"required"`
-	}
+	var jsonSchema RequestCodeInput
 
 	if err := c.ShouldBindJSON(&jsonSchema); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	if jsonSchema.Login == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "login required"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "login required"})
 		return
 	}
 
 	err := h.service.RequestCode(c.Request.Context(), jsonSchema.Login)
 
 	if err != nil {
-		if errors.Is(err, ErrLoginValidation) {
-			c.JSON(422, gin.H{"error": "Не удается определить тип логина"})
-			return
-		} else if errors.Is(err, ErrDatabaseUnexpectedError) {
-			c.JSON(500, gin.H{"error": "Ошибка с БД"})
-			return
-		} else if errors.Is(err, ErrPhoneParsing) {
-			c.JSON(422, gin.H{"error": "Невалидный номер телефона"})
-			return
-		} else {
-			c.JSON(500, gin.H{"error": "Неизвестная ошибка"})
-			return
-		}
+		handleError(err, c)
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Code sent"})
+	c.JSON(http.StatusOK, CodeSentResponse{Data: CodeSentData{Message: "Code sent"}})
 }
 
+// Verify godoc
+//
+//	@Description	Verify code for user
+//	@Tags			auth
+//	@Param			input	body	VerifyInput	true	"Login and code"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	TokenPairResponse
+//	@Summary		Verify code from user
+//	@Router			/api/v1/auth/verify [post]
 func (h *Handler) Verify(c *gin.Context) {
-	var jsonSchema struct {
-		Login string `json:"login" binding:"required"`
-		Code  int    `json:"code" binding:"required"`
-	}
+	var jsonSchema VerifyInput
 
 	if err := c.ShouldBindJSON(&jsonSchema); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	tokenPair, err := h.service.Verify(c.Request.Context(), jsonSchema.Login, jsonSchema.Code)
 
 	if err != nil {
-		if errors.Is(err, ErrLoginValidation) {
-			c.JSON(422, gin.H{"error": "Не удается определить тип логина"})
-			return
-		} else if errors.Is(err, ErrDatabaseUnexpectedError) {
-			c.JSON(500, gin.H{"error": "Ошибка с БД"})
-			return
-		} else if errors.Is(err, ErrPhoneParsing) {
-			c.JSON(422, gin.H{"error": "Невалидный номер телефона"})
-			return
-		}
+		handleError(err, c)
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": tokenPair})
+	c.JSON(http.StatusOK, TokenPairResponse{Data: tokenPair})
 }
 
+// Refresh godoc
+//
+//	@Description	Refresh access token
+//	@Tags			auth
+//	@Param			input	body	RefreshInput	true	"Refresh code"
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	RefreshResponse
+//	@Summary		Refresh token
+//	@Router			/api/v1/auth/refresh [post]
 func (h *Handler) Refresh(c *gin.Context) {
-	var jsonSchema struct {
-		RefreshToken string `json:"refresh_token" binding:"required"`
-	}
+	var jsonSchema RefreshInput
 
 	if err := c.ShouldBindJSON(&jsonSchema); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	result, err := h.service.Refresh(c.Request.Context(), jsonSchema.RefreshToken)
 
 	if err != nil {
-		if errors.Is(err, ErrRefreshTokenNotFound) {
-			c.JSON(404, gin.H{"error": "Не удается найти refresh токен или он истек"})
-		} else if errors.Is(err, ErrGeneratingAccessToken) {
-			c.JSON(500, gin.H{"error": "Ошибка при генерации access_token"})
-		}
+		handleError(err, c)
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": result})
+	c.JSON(http.StatusOK, RefreshResponse{Data: result})
 }
