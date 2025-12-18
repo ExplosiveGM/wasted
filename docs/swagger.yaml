@@ -1,0 +1,143 @@
+basePath: /api/v1
+definitions:
+  auth.CodeSentData:
+    properties:
+      message:
+        example: Code sent
+        type: string
+    type: object
+  auth.CodeSentResponse:
+    properties:
+      data:
+        $ref: '#/definitions/auth.CodeSentData'
+    type: object
+  auth.RefreshInput:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  auth.RefreshResponse:
+    properties:
+      data:
+        $ref: '#/definitions/auth.RefreshResult'
+    type: object
+  auth.RefreshResult:
+    properties:
+      access_token:
+        type: string
+    type: object
+  auth.RequestCodeInput:
+    properties:
+      login:
+        type: string
+    required:
+    - login
+    type: object
+  auth.TokenPair:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  auth.TokenPairResponse:
+    properties:
+      data:
+        $ref: '#/definitions/auth.TokenPair'
+    type: object
+  auth.VerifyInput:
+    properties:
+      code:
+        type: integer
+      login:
+        type: string
+    required:
+    - code
+    - login
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Wasted API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: wasted
+  version: "1.0"
+paths:
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token
+      parameters:
+      - description: Refresh code
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.RefreshResponse'
+      summary: Refresh token
+      tags:
+      - auth
+  /api/v1/auth/request-code:
+    post:
+      consumes:
+      - application/json
+      description: Send code to user email or phone
+      parameters:
+      - description: Login info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RequestCodeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.CodeSentResponse'
+      summary: Sent code user
+      tags:
+      - auth
+  /api/v1/auth/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify code for user
+      parameters:
+      - description: Login and code
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.VerifyInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.TokenPairResponse'
+      summary: Verify code from user
+      tags:
+      - auth
+schemes:
+- http
+- https
+swagger: "2.0"

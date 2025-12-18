@@ -12,6 +12,19 @@ import (
 	"github.com/spf13/viper"
 )
 
+//	@title			wasted
+//	@version		1.0
+//	@description	Wasted API.
+//	@termsOfService	http://swagger.io/terms/
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+//	@host			localhost:8080
+//	@BasePath		/api/v1
+//	@schemes		http https
+
 func main() {
 	config.Load()
 
@@ -32,7 +45,6 @@ func main() {
 	})
 
 	router := api.Router(db, logger)
-
 	logger.Info().Str("env", viper.GetString("APP_ENV")).Msg("🚀 Запуск приложения")
 
 	if err := router.Run(); err != nil {
