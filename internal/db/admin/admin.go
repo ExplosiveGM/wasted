@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/spf13/viper"
+	"github.com/ExplosiveGM/wasted/config"
 )
 
-func CreateDatabase() error {
-	adminDB, err := Connect()
+func CreateDatabase(dbConfig *config.DatabaseConfig) error {
+	adminDB, err := Connect(dbConfig)
 	if err != nil {
 		return fmt.Errorf("connect to admin db: %w", err)
 	}
 	defer adminDB.Close()
 
-	dbName := viper.GetString("DB_NAME")
+	dbName := dbConfig.Name
 
 	var exists bool
 	query := `SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)`
@@ -40,14 +40,14 @@ func CreateDatabase() error {
 	return nil
 }
 
-func DropDatabase() error {
-	adminDB, err := Connect()
+func DropDatabase(dbConfig *config.DatabaseConfig) error {
+	adminDB, err := Connect(dbConfig)
 	if err != nil {
 		return fmt.Errorf("connect to admin db: %w", err)
 	}
 	defer adminDB.Close()
 
-	dbName := viper.GetString("DB_NAME")
+	dbName := dbConfig.Name
 
 	_, err = adminDB.Exec(`
 		SELECT pg_terminate_backend(pg_stat_activity.pid)

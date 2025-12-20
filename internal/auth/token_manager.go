@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ExplosiveGM/wasted/config"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/spf13/viper"
 )
 
 type TokenParams struct {
@@ -15,16 +15,16 @@ type TokenParams struct {
 	ttl         time.Time
 }
 
-func generateAccessToken(login string) (*TokenParams, error) {
+func generateAccessToken(login string, jwtConfig *config.JWTConfig) (*TokenParams, error) {
 	ttl := time.Now().Add(15 * time.Minute)
-	secretKey := viper.GetString("JWT_ACCESS_SECRET")
+	secretKey := jwtConfig.AccessSecret
 
 	return generateToken(login, secretKey, ttl)
 }
 
-func generateRefreshToken(login string) (*TokenParams, error) {
+func generateRefreshToken(login string, jwtConfig *config.JWTConfig) (*TokenParams, error) {
 	ttl := time.Now().Add(7 * 24 * time.Hour)
-	secretKey := viper.GetString("JWT_REFRESH_SECRET")
+	secretKey := jwtConfig.RefreshSecret
 
 	return generateToken(login, secretKey, ttl)
 }

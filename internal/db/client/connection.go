@@ -6,18 +6,18 @@ import (
 	"log"
 	"time"
 
-	"github.com/spf13/viper"
+	"github.com/ExplosiveGM/wasted/config"
 )
 
-func Connect() (*sql.DB, error) {
+func Connect(dbConfig *config.DatabaseConfig) (*sql.DB, error) {
 	connStr := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		viper.GetString("DB_HOST"),
-		viper.GetString("DB_PORT"),
-		viper.GetString("DB_USER"),
-		viper.GetString("DB_PASSWORD"),
-		viper.GetString("DB_NAME"),
-		viper.GetString("DB_SSLMODE"),
+		dbConfig.Host,
+		dbConfig.Port,
+		dbConfig.User,
+		dbConfig.Password,
+		dbConfig.Name,
+		dbConfig.SslMode,
 	)
 
 	db, err := sql.Open("pgx", connStr)

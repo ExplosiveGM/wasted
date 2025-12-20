@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 
+	"github.com/ExplosiveGM/wasted/config"
 	"github.com/ExplosiveGM/wasted/docs"
 	"github.com/ExplosiveGM/wasted/internal/auth"
 	"github.com/ExplosiveGM/wasted/internal/database"
@@ -12,7 +13,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func Router(db *sql.DB, logger zerolog.Logger) *gin.Engine {
+func Router(db *sql.DB, logger zerolog.Logger, cfg *config.Config) *gin.Engine {
 	router := gin.Default()
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	v1 := router.Group("/api/v1")
@@ -20,7 +21,7 @@ func Router(db *sql.DB, logger zerolog.Logger) *gin.Engine {
 		authRoute := v1.Group("/auth")
 		{
 			queries := database.New(db)
-			authService := auth.NewAuthService(queries, logger)
+			authService := auth.NewAuthService(queries, logger, &cfg.Jwt)
 			authHandler := auth.NewAuthHandler(authService)
 			authRoute.POST("/request-code", authHandler.RequestCode)
 			authRoute.POST("/verify", authHandler.Verify)

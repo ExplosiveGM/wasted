@@ -9,7 +9,6 @@ import (
 	"github.com/ExplosiveGM/wasted/internal/db/client"
 	"github.com/ExplosiveGM/wasted/internal/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/spf13/viper"
 )
 
 //	@title			wasted
@@ -26,9 +25,9 @@ import (
 //	@schemes		http https
 
 func main() {
-	config.Load()
-
-	db, err := client.Connect()
+	cfg, _ := config.Load()
+	fmt.Println(cfg)
+	db, err := client.Connect(&cfg.Database)
 
 	if err != nil {
 		log.Fatalf("❌ Database connection failed: %v", err)
@@ -36,16 +35,10 @@ func main() {
 
 	defer db.Close()
 
-	logger := logger.NewLogger(logger.Config{
-		Environment: viper.GetString("APP_ENV"),
-		LogLevel:    viper.GetString("LOG_LEVEL"),
-		LogFile:     viper.GetString("LOG_FILE"),
-		EnableJSON:  viper.GetBool("LOG_ENABLE_JSON"),
-		EnableColor: viper.GetBool("LOG_ENABLE_COLOR"),
-	})
+	logger := logger.NewLogger(cfg)
 
-	router := api.Router(db, logger)
-	logger.Info().Str("env", viper.GetString("APP_ENV")).Msg("🚀 Запуск приложения")
+	router := api.Router(db, logger, cfg)
+	logger.Info().Str("env", cfg.App.Env).Msg("🚀 Запуск приложения")
 
 	if err := router.Run(); err != nil {
 		logger.Panic().Msg(
