@@ -5,34 +5,26 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ExplosiveGM/wasted/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-type Config struct {
-	AppName     string
-	Environment string
-	LogLevel    string
-	LogFile     string
-	EnableJSON  bool
-	EnableColor bool
-}
-
-func NewLogger(cfg Config) zerolog.Logger {
-	level := parseLevel(cfg.LogLevel)
+func NewLogger(cfg *config.Config) zerolog.Logger {
+	level := parseLevel(cfg.Log.Level)
 	zerolog.SetGlobalLevel(level)
 
 	var writers []io.Writer
 
-	if cfg.Environment != "production" || cfg.EnableColor {
+	if cfg.App.Env != "production" || cfg.Log.EnableColor {
 		writers = append(writers, createConsoleWriter(cfg))
 	}
 
-	if cfg.LogFile != "" {
-		writers = append(writers, createFileWriter(cfg.LogFile))
+	if cfg.Log.File != "" {
+		writers = append(writers, createFileWriter(cfg.Log.File))
 	}
 
-	if cfg.Environment == "production" {
+	if cfg.App.Env == "production" {
 		writers = append(writers, createSyslogWriter())
 	}
 
@@ -42,8 +34,8 @@ func NewLogger(cfg Config) zerolog.Logger {
 		With().
 		Timestamp().
 		Caller().
-		Str("app", cfg.AppName).
-		Str("env", cfg.Environment).
+		Str("app", cfg.App.Name).
+		Str("env", cfg.App.Env).
 		Logger()
 
 	log.Logger = logger
@@ -68,14 +60,14 @@ func parseLevel(level string) zerolog.Level {
 	}
 }
 
-func createConsoleWriter(cfg Config) io.Writer {
-	if cfg.EnableJSON {
+func createConsoleWriter(cfg *config.Config) io.Writer {
+	if cfg.Log.EnableJson {
 		return os.Stderr
 	}
 
 	return zerolog.ConsoleWriter{
 		Out:        os.Stderr,
-		NoColor:    !cfg.EnableColor,
+		NoColor:    !cfg.Log.EnableColor,
 		TimeFormat: "2006-01-02 15:04:05",
 	}
 }

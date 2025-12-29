@@ -4,17 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/spf13/viper"
+	"github.com/ExplosiveGM/wasted/config"
 )
 
-func Connect() (*sql.DB, error) {
+func Connect(dbConfig *config.DatabaseConfig) (*sql.DB, error) {
 	connStr := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/postgres?sslmode=%s",
-		viper.GetString("DB_USER"),
-		viper.GetString("DB_PASSWORD"),
-		viper.GetString("DB_HOST"),
-		viper.GetString("DB_PORT"),
-		viper.GetString("DB_SSLMODE"),
+		dbConfig.User,
+		dbConfig.Password,
+		dbConfig.Host,
+		dbConfig.Port,
+		dbConfig.SslMode,
 	)
 
 	return sql.Open("pgx", connStr)

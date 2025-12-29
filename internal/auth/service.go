@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ExplosiveGM/wasted/config"
 	"github.com/ExplosiveGM/wasted/internal/database"
 	"github.com/ExplosiveGM/wasted/internal/messaging"
 	"github.com/ExplosiveGM/wasted/internal/utils"
@@ -16,12 +17,13 @@ import (
 )
 
 type Service struct {
-	queries *database.Queries
-	logger  zerolog.Logger
+	queries   *database.Queries
+	logger    zerolog.Logger
+	jwtConfig *config.JWTConfig
 }
 
-func NewAuthService(queries *database.Queries, logger zerolog.Logger) *Service {
-	return &Service{queries: queries, logger: logger}
+func NewAuthService(queries *database.Queries, logger zerolog.Logger, jwtConfig *config.JWTConfig) *Service {
+	return &Service{queries: queries, logger: logger, jwtConfig: jwtConfig}
 }
 
 func (s *Service) RequestCode(ctx context.Context, login string) error {
@@ -118,14 +120,14 @@ func (s *Service) Verify(ctx context.Context, login string, code int) (TokenPair
 		return TokenPair{}, fmt.Errorf("%w: %v", ErrUserWithCodeNotFound, err)
 	}
 
-	accessTokenParams, err := generateAccessToken(user.Login)
+	accessTokenParams, err := generateAccessToken(user.Login, s.jwtConfig)
 
 	if err != nil {
 		s.logger.Err(err).Msg("Ошибка при генерации access-токена")
 		return TokenPair{}, fmt.Errorf("%w: %v", ErrGeneratingAccessToken, err)
 	}
 
-	refreshTokenParams, err := generateRefreshToken(user.Login)
+	refreshTokenParams, err := generateRefreshToken(user.Login, s.jwtConfig)
 
 	if err != nil {
 		s.logger.Err(err).Msg("Ошибка при генерации refresh-токена")
@@ -162,7 +164,7 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (RefreshResu
 		return RefreshResult{}, fmt.Errorf("%w: %v", ErrRefreshTokenNotFound, err)
 	}
 
-	accessTokenParams, err := generateAccessToken(user.Login)
+	accessTokenParams, err := generateAccessToken(user.Login, s.jwtConfig)
 
 	if err != nil {
 		return RefreshResult{}, fmt.Errorf("%w: %v", ErrGeneratingAccessToken, err)
